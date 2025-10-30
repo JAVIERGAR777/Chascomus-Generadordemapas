@@ -109,7 +109,6 @@
             background: #2980b9;
         }
 
-        /* Controles del heatmap */
         .controls-group {
             margin-top: 20px;
             padding-top: 20px;
@@ -153,7 +152,6 @@
             color: #e74c3c;
         }
 
-        /* Estadísticas en el panel izquierdo */
         .stats-panel {
             background: white;
             padding: 15px;
@@ -187,7 +185,6 @@
             height: 100%;
         }
 
-        /* Controles del mapa */
         .map-controls {
             position: absolute;
             top: 10px;
@@ -222,7 +219,6 @@
             color: white;
         }
 
-        /* Leyenda en el mapa - MÁS GRANDE */
         .map-legend {
             position: absolute;
             bottom: 20px;
@@ -264,7 +260,6 @@
             font-weight: 500;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -284,7 +279,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Panel de carga de datos -->
         <div class="data-panel">
             <h2>📊 Cargar Datos</h2>
             
@@ -323,7 +317,6 @@
                 </div>
             </div>
 
-            <!-- Estadísticas movidas al panel izquierdo -->
             <div class="stats-panel">
                 <h3>📈 Estadísticas</h3>
                 <div class="stat-item">
@@ -337,17 +330,14 @@
             </div>
         </div>
         
-        <!-- Mapa -->
         <div class="map-container">
             <div id="map"></div>
             
-            <!-- Controles del mapa SIMPLIFICADOS -->
             <div class="map-controls">
                 <button id="toggleHeatmap" class="control-btn active">Mapa de Calor</button>
                 <button id="togglePoints" class="control-btn">Puntos</button>
             </div>
 
-            <!-- Leyenda en el mapa (abajo a la derecha) - MÁS GRANDE -->
             <div class="map-legend">
                 <h4>Intensidad</h4>
                 <div class="legend-color"></div>
@@ -365,7 +355,6 @@
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <script>
-        // Variables globales
         let map;
         let heatmapLayer = null;
         let pointsLayer = null;
@@ -373,7 +362,6 @@
         let showHeatmap = true;
         let showPoints = false;
 
-        // Configuración del heatmap con transición amarillo-rojo intensa
         const heatmapConfig = {
             radius: 25,
             blur: 15,
@@ -389,28 +377,22 @@
             }
         };
 
-        // Inicialización del mapa - AHORA EN CHASCOMÚS
         function initMap() {
-            // Crear mapa centrado en Chascomús, Argentina
             map = L.map('map').setView([-35.5729, -58.0081], 12);
             
-            // Capa de OpenStreetMap
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
             
-            // Configurar eventos
             setupEventListeners();
         }
 
-        // Configurar event listeners
         function setupEventListeners() {
             const dropArea = document.getElementById('dropArea');
             const fileInput = document.getElementById('fileInput');
             const processBtn = document.getElementById('processData');
             const exportBtn = document.getElementById('exportBtn');
             
-            // Eventos para el área de arrastrar y soltar
             dropArea.addEventListener('click', () => fileInput.click());
             
             dropArea.addEventListener('dragover', (e) => {
@@ -432,16 +414,12 @@
                 }
             });
             
-            // Evento para cuando se selecciona un archivo
             fileInput.addEventListener('change', handleFileSelection);
             
-            // Evento para procesar los datos
             processBtn.addEventListener('click', processCoordinates);
             
-            // Evento para exportar
             exportBtn.addEventListener('click', exportHighResolution);
             
-            // Eventos para los controles del mapa
             document.getElementById('toggleHeatmap').addEventListener('click', function() {
                 showHeatmap = !showHeatmap;
                 this.classList.toggle('active', showHeatmap);
@@ -454,7 +432,6 @@
                 updateMap();
             });
             
-            // Eventos para los sliders
             document.getElementById('radiusSlider').addEventListener('input', function() {
                 const value = this.value;
                 document.getElementById('radiusValue').textContent = value;
@@ -475,14 +452,12 @@
             });
         }
 
-        // Exportar en alta resolución - SOLUCIÓN MEJORADA SIN MÁRGENES
         function exportHighResolution() {
             if (coordinatesData.length === 0) {
                 alert('No hay datos para exportar');
                 return;
             }
 
-            // Mostrar mensaje de procesamiento
             const processingMsg = document.createElement('div');
             processingMsg.style.cssText = `
                 position: fixed;
@@ -499,19 +474,18 @@
             processingMsg.textContent = 'Generando imagen en alta resolución...';
             document.body.appendChild(processingMsg);
 
-            // Esperar un momento para que se renderice el mensaje
             setTimeout(() => {
                 try {
-                    // Resolución estándar fija
                     const width = 1920;
                     const height = 1080;
 
-                    // Ocultar temporalmente los controles que no queremos en la exportación
                     const mapControls = document.querySelector('.map-controls');
                     const originalControlsDisplay = mapControls.style.display;
                     mapControls.style.display = 'none';
 
-                    // Crear un contenedor temporal para la captura
+                    const currentCenter = map.getCenter();
+                    const currentZoom = map.getZoom();
+
                     const tempContainer = document.createElement('div');
                     tempContainer.style.cssText = `
                         position: fixed;
@@ -521,23 +495,16 @@
                         height: ${height}px;
                         background: white;
                         z-index: 9999;
-                        overflow: hidden;
                     `;
 
-                    // Clonar el mapa y la leyenda
-                    const mapClone = document.getElementById('map').cloneNode(true);
+                    const tempMapContainer = document.createElement('div');
+                    tempMapContainer.style.cssText = `
+                        width: 100%;
+                        height: 100%;
+                    `;
+                    tempContainer.appendChild(tempMapContainer);
+
                     const legendClone = document.querySelector('.map-legend').cloneNode(true);
-                    
-                    // Estilizar el clon del mapa para que ocupe todo el espacio
-                    mapClone.style.cssText = `
-                        width: 100% !important;
-                        height: 100% !important;
-                        position: absolute !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                    `;
-
-                    // Estilizar la leyenda clonada
                     legendClone.style.cssText = `
                         position: absolute;
                         bottom: 20px;
@@ -549,15 +516,35 @@
                         z-index: 1000;
                         width: 220px;
                     `;
-
-                    // Agregar elementos al contenedor temporal
-                    tempContainer.appendChild(mapClone);
                     tempContainer.appendChild(legendClone);
+
                     document.body.appendChild(tempContainer);
 
-                    // Forzar redibujado
+                    const tempMap = L.map(tempMapContainer, {
+                        zoomControl: false,
+                        attributionControl: false
+                    }).setView(currentCenter, currentZoom);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(tempMap);
+
+                    if (showHeatmap && coordinatesData.length > 0) {
+                        const heatPoints = coordinatesData.map(coord => [coord.lat, coord.lng, coord.value]);
+                        L.heatLayer(heatPoints, heatmapConfig).addTo(tempMap);
+                    }
+
+                    if (showPoints && coordinatesData.length > 0) {
+                        coordinatesData.forEach(coord => {
+                            L.circleMarker([coord.lat, coord.lng], {
+                                radius: 4,
+                                color: '#e74c3c',
+                                fillColor: '#e74c3c',
+                                fillOpacity: 0.7,
+                                weight: 1
+                            }).addTo(tempMap);
+                        });
+                    }
+
                     setTimeout(() => {
-                        // Capturar el contenedor temporal
                         html2canvas(tempContainer, {
                             width: width,
                             height: height,
@@ -565,16 +552,12 @@
                             useCORS: true,
                             allowTaint: false,
                             backgroundColor: '#ffffff',
-                            logging: false,
-                            removeContainer: true
+                            logging: false
                         }).then(canvas => {
-                            // Limpiar el contenedor temporal
                             document.body.removeChild(tempContainer);
                             
-                            // Restaurar los controles
                             mapControls.style.display = originalControlsDisplay;
 
-                            // Crear enlace de descarga
                             const link = document.createElement('a');
                             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                             
@@ -582,14 +565,11 @@
                             link.href = canvas.toDataURL('image/png', 1.0);
                             link.click();
 
-                            // Limpiar mensaje de procesamiento
                             document.body.removeChild(processingMsg);
                             
-                            // Mostrar mensaje de éxito
                             alert('✅ Imagen exportada exitosamente!\n\nArchivo: ' + link.download);
                         }).catch(error => {
                             console.error('Error al exportar:', error);
-                            // Limpiar en caso de error
                             if (document.body.contains(tempContainer)) {
                                 document.body.removeChild(tempContainer);
                             }
@@ -597,7 +577,7 @@
                             document.body.removeChild(processingMsg);
                             alert('❌ Error al exportar la imagen.');
                         });
-                    }, 1000);
+                    }, 2000); 
 
                 } catch (error) {
                     console.error('Error:', error);
@@ -607,8 +587,6 @@
             }, 500);
         }
 
-        // El resto de las funciones se mantienen igual...
-        // Manejar la selección de archivos
         function handleFileSelection() {
             const fileInput = document.getElementById('fileInput');
             const processBtn = document.getElementById('processData');
@@ -660,7 +638,6 @@
             }
         }
 
-        // Parsear CSV
         function parseCSV(csvText) {
             const lines = csvText.split('\n');
             const result = [];
@@ -682,7 +659,6 @@
             return result;
         }
 
-        // Extraer coordenadas del JSON
         function extractCoordinates(data) {
             coordinatesData = [];
             
@@ -692,7 +668,6 @@
                 
                 let latColumn, lngColumn, valueColumn;
                 
-                // Buscar columnas que puedan contener coordenadas y valores
                 for (const col of columns) {
                     const colLower = col.toLowerCase();
                     
@@ -705,7 +680,6 @@
                     }
                 }
                 
-                // Si no encontramos columnas con nombres esperados, usar las primeras columnas numéricas
                 if (!latColumn || !lngColumn) {
                     let numericCount = 0;
                     for (const col of columns) {
@@ -723,7 +697,6 @@
                     }
                 }
                 
-                // Extraer las coordenadas
                 if (latColumn && lngColumn) {
                     for (let i = 0; i < data.length; i++) {
                         const row = data[i];
@@ -754,7 +727,6 @@
             }
         }
 
-        // Procesar coordenadas y generar heatmap
         function processCoordinates() {
             if (coordinatesData.length === 0) {
                 alert('No hay datos para procesar');
@@ -765,9 +737,7 @@
             updateStats();
         }
 
-        // Actualizar el mapa
         function updateMap() {
-            // Limpiar capas existentes
             if (heatmapLayer) {
                 map.removeLayer(heatmapLayer);
                 heatmapLayer = null;
@@ -778,13 +748,11 @@
                 pointsLayer = null;
             }
             
-            // Crear mapa de calor si está activado
             if (showHeatmap && coordinatesData.length > 0) {
                 const heatPoints = coordinatesData.map(coord => [coord.lat, coord.lng, coord.value]);
                 heatmapLayer = L.heatLayer(heatPoints, heatmapConfig).addTo(map);
             }
             
-            // Mostrar puntos individuales si está activado
             if (showPoints && coordinatesData.length > 0) {
                 pointsLayer = L.layerGroup().addTo(map);
                 
@@ -805,19 +773,16 @@
                 });
             }
             
-            // Ajustar vista del mapa si es la primera vez
             if (coordinatesData.length > 0) {
                 const bounds = L.latLngBounds(coordinatesData.map(d => [d.lat, d.lng]));
                 map.fitBounds(bounds, { padding: [20, 20] });
             }
         }
 
-        // Actualizar configuración del heatmap
         function updateHeatmapConfig() {
             heatmapConfig.radius = parseInt(document.getElementById('radiusSlider').value);
             heatmapConfig.blur = parseInt(document.getElementById('blurSlider').value);
             
-            // Ajustar intensidad multiplicando los valores
             const intensity = parseFloat(document.getElementById('intensitySlider').value);
             if (heatmapLayer && coordinatesData.length > 0) {
                 const heatPoints = coordinatesData.map(coord => [coord.lat, coord.lng, coord.value * intensity]);
@@ -825,12 +790,10 @@
             }
         }
 
-        // Actualizar estadísticas SIMPLIFICADAS
         function updateStats() {
             document.getElementById('totalPoints').textContent = coordinatesData.length;
         }
 
-        // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
         });
